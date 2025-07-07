@@ -74,7 +74,7 @@ if 'instructions_visible' not in st.session_state:
 
 class CourseTransferabilityAnalyzer:
     def __init__(self):
-        self.csv_url = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/wm_courses_2025.csv"
+        self.csv_url = "wm_courses_2025.csv"  # For local file fallback
         
     @st.cache_resource
     def load_model(_self):
@@ -120,15 +120,14 @@ class CourseTransferabilityAnalyzer:
             return 0.0   # Too far away
     
     def load_csv_data(self, csv_source):
-        """Load CSV data from file upload or URL"""
+        """Load CSV data from file upload or local file"""
         try:
             if csv_source == "url":
-                # Load from GitHub URL
-                response = requests.get(self.csv_url)
-                if response.status_code == 200:
-                    df = pd.read_csv(io.StringIO(response.text))
+                # Load from local file in the same directory
+                if Path("wm_courses_2025.csv").exists():
+                    df = pd.read_csv("wm_courses_2025.csv")
                 else:
-                    st.error(f"Failed to load CSV from URL. Status code: {response.status_code}")
+                    st.error("CSV file not found in app directory")
                     return None
             else:
                 # Load from uploaded file
@@ -318,7 +317,7 @@ def main():
         st.subheader("📁 Data Source")
         csv_source = st.radio(
             "Choose CSV source:",
-            ["Upload File", "Load from GitHub"],
+            ["Upload File", "Use App's CSV File"],
             key="csv_source"
         )
         
@@ -367,7 +366,7 @@ def main():
     if csv_source == "Upload File":
         csv_file = st.file_uploader("Upload CSV file", type=['csv'])
     else:
-        st.info("Using GitHub repository CSV file")
+        st.info("Using app's built-in CSV file")
         csv_file = "url"
     
     if csv_file and st.button("Load Course Data"):
